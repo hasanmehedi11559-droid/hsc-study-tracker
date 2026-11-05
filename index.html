@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="bn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#123b32">
+<title>HSC Study Tracker</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<style>
+:root{color-scheme:light;--bg:#f3f6f4;--card:#fff;--ink:#17251f;--muted:#68766f;--green:#176b4b;--pale:#e7f3ec;--line:#e1e9e4;--orange:#a65b12}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Noto Sans Bengali",sans-serif}
+header{background:linear-gradient(135deg,#123b32,#176b4b);color:#fff;padding:24px 18px 28px;border-radius:0 0 24px 24px}
+.wrap{max-width:760px;margin:auto;padding:0 14px}h1{font-size:23px;margin:0 0 5px}header p{margin:0;color:#d6e9df;font-size:13px}
+main{padding:16px 0 35px}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:-12px}
+.stat,.panel,.daycard{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:13px;box-shadow:0 3px 12px #193b2b0b}
+.stat small{display:block;color:var(--muted);font-size:11px}.stat strong{font-size:22px}
+.progress{height:9px;background:#e4ebe6;border-radius:99px;overflow:hidden;margin:14px 0 5px}.bar{height:100%;background:#239765;width:0;transition:width .2s}
+.tabs{display:flex;gap:8px;margin:17px 0 12px}.tabs button,.btn{border:1px solid var(--line);background:#fff;color:var(--ink);padding:10px 14px;border-radius:12px;font-weight:650;font-size:14px}
+.tabs button.active,.primary{background:var(--green);color:white;border-color:var(--green)}
+select{width:100%;padding:12px;border:1px solid var(--line);border-radius:12px;background:white;font:inherit;margin:8px 0 12px;color:var(--ink)}
+h2{font-size:18px;margin:5px 0 12px}.muted{color:var(--muted);font-size:12px}
+.task{display:flex;align-items:flex-start;gap:11px;padding:14px 12px;border:1px solid var(--line);border-radius:13px;margin:9px 0;background:#fff}
+.task input{width:22px;height:22px;accent-color:var(--green);flex:none;margin:1px 0 0}
+.task.done span{text-decoration:line-through;color:var(--muted)}
+.status{font-size:11px;border-radius:99px;padding:5px 9px;background:#edf0ee;color:#59665f}
+.status.done{background:#e4f5eb;color:#176b4b}.status.partial{background:#fff1dc;color:var(--orange)}
+.dayhead{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.daygrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.daybtn{background:#fff;border:1px solid var(--line);border-radius:13px;padding:12px 5px;text-align:center;color:var(--ink);font:inherit}
+.daybtn b{display:block;font-size:15px}.daybtn small{color:var(--muted);font-size:11px}.daybtn.done{border-color:#67b58b;background:#f0faf4}
+.actions{display:flex;gap:8px;margin-top:14px}.actions button{flex:1}
+footer{text-align:center;color:var(--muted);font-size:11px;margin:20px 0}
+.hidden{display:none!important}
+@media(min-width:600px){header{padding-top:30px}.stats{gap:12px}.stat{padding:16px}}
+</style>
+</head>
+<body>
+<header><div class="wrap"><h1>📚 HSC Study Tracker</h1><p>তোমার প্রতিদিনের পড়ার হিসাব — ৫ থেকে ৩০ তারিখ</p></div></header>
+<main class="wrap">
+<section class="stats">
+ <div class="stat"><small>মোট কাজ</small><strong id="total">৫০</strong></div>
+ <div class="stat"><small>সম্পন্ন</small><strong id="completed">০</strong></div>
+ <div class="stat"><small>সম্পন্ন দিন</small><strong id="daysDone">০/২৬</strong></div>
+</section>
+<section class="panel" style="margin-top:10px">
+ <div class="dayhead"><b>সামগ্রিক অগ্রগতি</b><b id="percent">০%</b></div>
+ <div class="progress"><div class="bar" id="bar"></div></div>
+ <div class="muted" id="remaining">এখনো কোনো কাজ সম্পন্ন হয়নি</div>
+</section>
+<div class="tabs">
+ <button id="todayTab" class="active" type="button">দিনভিত্তিক</button>
+ <button id="allTab" type="button">সব তারিখ</button>
+</div>
+<section id="todayView" class="panel">
+ <label for="dateSelect"><b>তারিখ নির্বাচন করো</b></label>
+ <select id="dateSelect"></select>
+ <div class="dayhead"><h2 id="dayTitle">৫ তারিখের রুটিন</h2><span class="status" id="dayStatus">বাকি আছে</span></div>
+ <div class="muted" id="dayCount"></div>
+ <div id="tasks"></div>
+ <div class="actions">
+  <button class="btn" id="prev" type="button">← আগের দিন</button>
+  <button class="btn primary" id="next" type="button">পরের দিন →</button>
+ </div>
+</section>
+<section id="allView" class="hidden">
+ <div class="daygrid" id="dayGrid"></div>
+</section>
+<div class="actions">
+ <button class="btn" id="install" type="button" style="display:none">📲 অ্যাপ হিসেবে ইনস্টল</button>
+ <button class="btn" id="reset" type="button">সব মার্ক রিসেট</button>
+</div>
+<footer>তোমার অগ্রগতি এই ডিভাইসের ব্রাউজারে সংরক্ষিত থাকবে।</footer>
+</main>
+<script>
+const schedule=[
+[5,["P2 — অধ্যায় ৬, ৭","B1 — অধ্যায় ২"]],
+[6,["P2 — অধ্যায় ২, ৩","B1 — অধ্যায় ৩"]],
+[7,["P2 — অধ্যায় ৪, ৫","B1 — অধ্যায় ৪"]],
+[8,["P2 — অধ্যায় ৮, ৯","B1 — অধ্যায় ৫"]],
+[9,["P1 — অধ্যায় ৮, ৯","B1 — অধ্যায় ৬"]],
+[10,["P1 — অধ্যায় ১, ৭","B1 — অধ্যায় ৭"]],
+[11,["P1 — অধ্যায় ১০, ৫","B1 — অধ্যায় ৮"]],
+[12,["P1 — অধ্যায় ২, ৬","B1 — অধ্যায় ৯"]],
+[13,["P1 — অধ্যায় ৩, ৪","B1 — অধ্যায় ১০"]],
+[14,["P2 — অধ্যায় ৮, ১০","B1 — অধ্যায় ১১"]],
+[15,["C1 — অধ্যায় ১ (খাতার লেখা যাচাই করো)","B1 — অধ্যায় ১২"]],
+[16,["C1 — অধ্যায় ৩","B2 — অধ্যায় ১"]],
+[17,["C1 — অধ্যায় ৪","B2 — অধ্যায় ২"]],
+[18,["C1 — অধ্যায় ১, ৫","B2 — অধ্যায় ৩"]],
+[19,["C2 — অধ্যায় ১","B2 — অধ্যায় ৪"]],
+[20,["C2 — অধ্যায় ২","B2 — অধ্যায় ৫"]],
+[21,["C2 — অধ্যায় ৩","B2 — অধ্যায় ৬"]],
+[22,["C2 — অধ্যায় ৪","B2 — অধ্যায় ৭"]],
+[23,["C2 — অধ্যায় ৫","B2 — অধ্যায় ৮"]],
+[24,["M1 — অধ্যায় ১, ২","B2 — অধ্যায় ৯"]],
+[25,["M1 — অধ্যায় ৩, ৪","B2 — অধ্যায় ১০"]],
+[26,["M1 — অধ্যায় ৫, ৬","B2 — অধ্যায় ১১"]],
+[27,["M1 — অধ্যায় ৭, ৮","B2 — অধ্যায় ১২"]],
+[28,["M1 — অধ্যায় ৯, ১০"]],
+[29,["M2 — অধ্যায় ১, ২, ৩"]],
+[30,["M2 — অধ্যায় ১০, ৯"]]
+];
+const bn=n=>String(n).replace(/\d/g,d=>"০১২৩৪৫৬৭৮৯"[d]);
+const key=(d,i)=>`${d}-${i}`;
+let marks={};try{marks=JSON.parse(localStorage.getItem("hsc-tracker-marks")||"{}")}catch(e){}
+let selected=5;
+const $=id=>document.getElementById(id);
+function save(){localStorage.setItem("hsc-tracker-marks",JSON.stringify(marks));render()}
+function counts(){let total=0,done=0,days=0;schedule.forEach(([d,t])=>{total+=t.length;let n=t.filter((_,i)=>marks[key(d,i)]).length;done+=n;if(n===t.length)days++});return{total,done,days}}
+function render(){
+ const c=counts(),pct=Math.round(c.done/c.total*100);
+ $("total").textContent=bn(c.total);$("completed").textContent=bn(c.done);$("daysDone").textContent=bn(c.days)+"/২৬";
+ $("percent").textContent=bn(pct)+"%";$("bar").style.width=pct+"%";
+ $("remaining").textContent=`আরও ${bn(c.total-c.done)}টি কাজ বাকি`;
+ const [,tasks]=schedule.find(x=>x[0]===selected),n=tasks.filter((_,i)=>marks[key(selected,i)]).length;
+ $("dayTitle").textContent=bn(selected)+" তারিখের রুটিন";
+ $("dayCount").textContent=`${bn(n)}/${bn(tasks.length)}টি কাজ সম্পন্ন`;
+ $("dayStatus").textContent=n===tasks.length?"সম্পন্ন":n?"চলমান":"বাকি আছে";
+ $("dayStatus").className="status "+(n===tasks.length?"done":n?"partial":"");
+ $("tasks").innerHTML="";
+ tasks.forEach((task,i)=>{let label=document.createElement("label");label.className="task"+(marks[key(selected,i)]?" done":"");
+ let cb=document.createElement("input");cb.type="checkbox";cb.checked=!!marks[key(selected,i)];cb.addEventListener("change",()=>{marks[key(selected,i)]=cb.checked;save()});
+ let span=document.createElement("span");span.textContent=task;label.append(cb,span);$("tasks").append(label)});
+ $("prev").disabled=selected===5;$("next").disabled=selected===30;
+ $("dayGrid").innerHTML="";
+ schedule.forEach(([d,t])=>{let n=t.filter((_,i)=>marks[key(d,i)]).length,btn=document.createElement("button");btn.className="daybtn"+(n===t.length?" done":"");btn.innerHTML=`<b>${bn(d)} তারিখ</b><small>${n===t.length?"✓ সম্পন্ন":bn(n)+"/"+bn(t.length)+" কাজ"}</small>`;btn.onclick=()=>{selected=d;$("dateSelect").value=d;showToday()};$("dayGrid").append(btn)});
+}
+function showToday(){$("todayView").classList.remove("hidden");$("allView").classList.add("hidden");$("todayTab").classList.add("active");$("allTab").classList.remove("active");render()}
+function showAll(){$("todayView").classList.add("hidden");$("allView").classList.remove("hidden");$("allTab").classList.add("active");$("todayTab").classList.remove("active");render()}
+schedule.forEach(([d])=>{let o=document.createElement("option");o.value=d;o.textContent=bn(d)+" তারিখ";$("dateSelect").append(o)});
+$("dateSelect").value=selected;$("dateSelect").onchange=e=>{selected=+e.target.value;render()};
+$("prev").onclick=()=>{selected--; $("dateSelect").value=selected;render()};
+$("next").onclick=()=>{selected++; $("dateSelect").value=selected;render()};
+$("todayTab").onclick=showToday;$("allTab").onclick=showAll;
+$("reset").onclick=()=>{if(confirm("সব দিনের মার্ক মুছে ফেলতে চাও?")){marks={};save()}};
+render();
+let installPrompt=null;
+window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();installPrompt=e;$("install").style.display="block"});
+$("install").onclick=async()=>{if(installPrompt){installPrompt.prompt();await installPrompt.userChoice;installPrompt=null}else alert("Chrome-এর মেনু থেকে Add to Home screen নির্বাচন করো।")};
+if("serviceWorker" in navigator && location.protocol.startsWith("http"))navigator.serviceWorker.register("./sw.js").catch(()=>{});
+</script>
+</body></html>
